@@ -215,25 +215,58 @@ void ntpython_doread(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
     t_fourcc type = FOUR_CHAR_CODE('TEXT');
     long err;
     
+    bool found_script = false;
+    
     if (s == gensym("")) {
         filename[0] = 0;
-        if (open_dialog(filename, &path, &type,  &type, 1))
-            return;
+        if (open_dialog(filename, &path, &type, NULL, 1) == 0) {
+            found_script = true;
+        } else return; // not selected
     } else {
         strcpy(filename,s->s_name);
-        if (locatefile_extended(filename,&path,&type,&type,1)) {
-            object_error((t_object *)x, "can't find file %s",filename);
-            return;
+        if (locatefile_extended(filename,&path,&type,&type,1) == 0 ) {
+            found_script = true;
         }
     }
-    // success
-    err = path_toabsolutesystempath(path, filename, fullpath);
-    if (!err) {
-        path_splitnames(fullpath, foldername, scriptname);
-        if (has_py_extention(scriptname)){
-            strncpy(modulename, scriptname, strlen(scriptname) - 3);
+    
+    // If user specified a file or a file was found in File Paths
+    if (found_script){
+        err = path_toabsolutesystempath(path, filename, fullpath);
+        if (!err) {
+            path_splitnames(fullpath, foldername, scriptname);
+            if (has_py_extention(scriptname)){
+                strncpy(modulename, scriptname, strlen(scriptname) - 3);
+            } else {
+                strcpy(modulename, scriptname);
+            }
+            object_post((t_object*)x, "loading...: %s in %s", modulename, foldername);
+            load_python_script(x, foldername, modulename);
         }
-        load_python_script(x, foldername, modulename);
+        return;
+    }
+    
+    // Try to load a script with given name in the same directory as the patcher,
+    // in which this object was created.
+    if (!found_script){
+        strcpy(filename,s->s_name);
+        t_object *mypatcher;
+        object_obex_lookup(x, gensym("#P"), &mypatcher);
+        t_symbol *patcher_path = object_attr_getsym(mypatcher, gensym("filepath"));
+        if (patcher_path != gensym("")){
+            if (path_nameconform(patcher_path->s_name, fullpath, PATH_STYLE_SLASH, PATH_TYPE_BOOT)==0){
+                char patcher_name[MAX_PATH_CHARS];
+                path_splitnames(fullpath, foldername, patcher_name);
+                if (has_py_extention(filename)){
+                    strncpy(modulename, filename, strlen(filename) - 3);
+                } else {
+                    strcpy(modulename, filename);
+                }
+                object_post((t_object*)x, "loading...: %s in %s", modulename, foldername);
+                load_python_script(x, foldername, modulename);
+            }
+        } else {
+            object_error((t_object *)x, "can't find file %s", filename);
+        }
     }
 }
 
@@ -270,7 +303,6 @@ void ntpython_anything(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
 
 void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
 {
-    post("initialized %d", Py_IsInitialized());
     Py_SetProgramName("nt.python");
     // Initializing Python Interpreter
     if (Py_IsInitialized() == 0) Py_Initialize();
@@ -340,9 +372,12 @@ void print_python_error_message(t_ntpython *x){
         
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         pystr = PyObject_Str(pvalue);
-        char *error_desc = PyString_AsString(pystr); // do not free string
-        if (error_desc != NULL) {
-            object_error((t_object *)x, error_desc);
+        if (pystr){
+            char *error_desc = PyString_AsString(pystr); // do not free string
+            if (error_desc != NULL) {
+                object_error((t_object *)x, error_desc);
+            }
+            Py_XDECREF(pystr);
         }
         
         /* See if we can get a full traceback */
@@ -356,12 +391,15 @@ void print_python_error_message(t_ntpython *x){
             PyObject *pyth_val;
             
             pyth_val = PyObject_CallFunctionObjArgs(pyth_func, ptype, pvalue, ptraceback, NULL);
-            
-            pystr = PyObject_Str(pyth_val);
-            char *full_backtrace = PyString_AsString(pystr);
-            if (full_backtrace != NULL) object_error((t_object *)x, full_backtrace);
-            Py_XDECREF(pyth_val);
-            Py_XDECREF(pystr);
+            if (pyth_val){
+                pystr = PyObject_Str(pyth_val);
+                if (pystr){
+                    char *full_backtrace = PyString_AsString(pystr);
+                    if (full_backtrace != NULL) object_error((t_object *)x, full_backtrace);
+                    Py_XDECREF(pystr);
+                }
+                Py_XDECREF(pyth_val);
+            }
             Py_DECREF(pyth_func);
         }
         Py_XDECREF(pyth_module);
