@@ -270,7 +270,10 @@ void ntpython_anything(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
 
 void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
 {
-    Py_Initialize();
+    post("initialized %d", Py_IsInitialized());
+    Py_SetProgramName("nt.python");
+    // Initializing Python Interpreter
+    if (Py_IsInitialized() == 0) Py_Initialize();
     
 	t_ntpython *x = NULL;
 	x = (t_ntpython *)object_alloc(ntpython_class);
@@ -284,11 +287,9 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
         if ((argv + i)->a_type == A_SYM) {
             char *scriptname = atom_getsym(argv+i)->s_name;
             if (!has_py_extention(scriptname)){
-                size_t len = strlen(scriptname) + strlen(".py") + 1;
-                char *out = malloc(len);
-                sprintf(out, "%s%s", scriptname, ".py");
-                ntpython_doread(x, gensym(out), argc, argv);
-                free(out);
+                char modulename[MAX_PATH_CHARS];
+                sprintf(modulename, "%s%s", scriptname, ".py");
+                ntpython_doread(x, gensym(modulename), argc, argv);
             } else {
                 ntpython_doread(x, gensym(scriptname), argc, argv);
             }
@@ -305,7 +306,7 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
 void ntpython_free(t_ntpython *x)
 {
     Py_XDECREF(x->t_module);
-//    Py_Finalize();
+//  Py_Finalize();
     if (x->t_modulename) free(x->t_modulename);
 }
 
