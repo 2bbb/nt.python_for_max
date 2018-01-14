@@ -116,10 +116,10 @@ t_atom convert_to_max_object(PyObject *obj){
         return a;
     }
     if (PyString_Check(obj)){
-        post(PyString_AsString(obj));
         atom_setsym(&a, gensym(PyString_AsString(obj)));
         return a;
     }
+    return a;
 }
 
 t_atomarray *convert_list_to_max_object(PyObject *obj){
@@ -143,7 +143,6 @@ void run_python_method(t_ntpython *x, t_symbol *s, long argc, t_atom *argv){
     if (!has_module_loaded(x)) return;
     
     char *func_name = s->s_name;
-    object_post((t_object *)x, "function (%s)", func_name);
     
     PyObject *pFunc, *pArgs, *pValue;
     pFunc = PyObject_GetAttrString(x->t_module, func_name);
@@ -202,13 +201,6 @@ void ntpython_assist(t_ntpython *x, void *b, long m, long a, char *s)
 		sprintf(s, "Message In");
 }
 
-void ntpython_free(t_ntpython *x)
-{    
-    Py_XDECREF(x->t_module);
-    Py_Finalize();
-    if (x->t_modulename) free(x->t_modulename);
-}
-
 void ntpython_read(t_ntpython *x, t_symbol *s)
 {
 	defer((t_object *)x, (method)ntpython_doread, s, 0, NULL);
@@ -218,7 +210,7 @@ void ntpython_doread(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
 {
     char filename[MAX_PATH_CHARS], fullpath[MAX_PATH_CHARS];
     char foldername[MAX_PATH_CHARS], scriptname[MAX_PATH_CHARS];
-    char modulename[100]; // 100-chars should be long enough for a filename
+    char modulename[100]; // 100-chars should be long enough for a filename??
     short path;
     t_fourcc type = FOUR_CHAR_CODE('TEXT');
     long err;
@@ -257,7 +249,7 @@ void ntpython_doreload(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
     
     x->t_module = PyImport_ReloadModule(x->t_module);
     if (x->t_module){
-        if (x->t_modulename) object_post((t_object *)x, "module %s reloaded", x->t_modulename);
+        if (x->t_modulename) object_post((t_object *)x, "reloaded: %s", x->t_modulename);
         outlet_bang(x->outlet2);
     } else {
         print_python_error_message(x);
@@ -308,6 +300,13 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
     x->outlet2 = bangout(x);
     x->outlet = outlet_new(x, NULL);
 	return x;
+}
+
+void ntpython_free(t_ntpython *x)
+{
+    Py_XDECREF(x->t_module);
+//    Py_Finalize();
+    if (x->t_modulename) free(x->t_modulename);
 }
 
 #pragma mark UTILITY
