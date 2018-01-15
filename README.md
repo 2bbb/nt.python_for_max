@@ -18,3 +18,7 @@ Your Python script should be placed in one of your Max File Path folders or the 
 
 ## Compilation
 If you want to compile the project, download Max-SDK and place this repository into a folder named "source" in the SDK. 
+  
+## Coming Features
+- multi-threading
+- "print" in python -> Max console
