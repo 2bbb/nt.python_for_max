@@ -43,8 +43,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 392.0, 370.0, 200.0, 114.0 ],
-					"presentation_rect" : [ 376.0, 382.0, 0.0, 0.0 ],
+					"patching_rect" : [ 392.0, 370.0, 203.0, 114.0 ],
 					"style" : "",
 					"text" : "please be noted:\nyour python script needs to return in one of the following object type:\n\ninteger\nfloat\nstring\nlist (list in list is not supported)"
 				}
@@ -57,7 +56,6 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 33.0, 17.0, 322.0, 20.0 ],
-					"presentation_rect" : [ 41.0, 19.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "ntpython: yet another python interpreter for Cycling'74 Max"
 				}
@@ -70,7 +68,6 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 226.0, 245.0, 145.0, 20.0 ],
-					"presentation_rect" : [ 192.0, 211.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "2. call functions in python"
 				}
@@ -83,7 +80,6 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 120.0, 83.0, 342.0, 20.0 ],
-					"presentation_rect" : [ 100.0, 62.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "1. load python script"
 				}
@@ -97,7 +93,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 262.5, 301.0, 70.0, 22.0 ],
-					"presentation_rect" : [ 250.0, 288.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "power 2 10"
 				}
@@ -124,7 +119,6 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 226.0, 167.0, 185.0, 33.0 ],
-					"presentation_rect" : [ 209.0, 200.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "if you made any changes in the loaded Pyrhon script, hit reload!"
 				}
@@ -138,7 +132,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 178.0, 167.0, 44.0, 22.0 ],
-					"presentation_rect" : [ 166.0, 188.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "reload"
 				}
@@ -177,7 +170,6 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 25.0, 432.0, 87.0, 20.0 ],
-					"presentation_rect" : [ 47.0, 292.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "returned value"
 				}
@@ -189,7 +181,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 279.0, 434.0, 47.0, 20.0 ],
+					"patching_rect" : [ 282.0, 434.0, 47.0, 20.0 ],
 					"style" : "",
 					"text" : "loaded"
 				}
@@ -202,7 +194,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "bang" ],
-					"patching_rect" : [ 249.0, 432.0, 24.0, 24.0 ],
+					"patching_rect" : [ 252.0, 432.0, 24.0, 24.0 ],
 					"style" : ""
 				}
 
@@ -227,9 +219,9 @@
 					"numinlets" : 1,
 					"numoutlets" : 2,
 					"outlettype" : [ "", "bang" ],
-					"patching_rect" : [ 120.0, 386.0, 148.0, 22.0 ],
+					"patching_rect" : [ 120.0, 386.0, 151.0, 22.0 ],
 					"style" : "",
-					"text" : "ntpython python_example"
+					"text" : "nt.python python_example"
 				}
 
 			}
@@ -285,7 +277,7 @@
 			}
  ],
 		"dependency_cache" : [ 			{
-				"name" : "ntpython.mxo",
+				"name" : "nt.python.mxo",
 				"type" : "iLaX"
 			}
  ],
