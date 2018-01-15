@@ -1,4 +1,4 @@
-# nt.python
+# nt.python for C74 Max
 Yet another python interpreter external object for Cycling'74 Max
 
 <img src="https://github.com/naotokui/nt.python/blob/master/nt.python/help/ntpython_screen.png" width=600>
