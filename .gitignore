@@ -2,3 +2,6 @@
 *.xcworkspacedata
 *.xcuserstate
 *.xcbkptlist
+xcuserdata
+
+*.pyc

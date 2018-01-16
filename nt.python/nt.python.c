@@ -53,7 +53,7 @@ void ext_main(void *r)
 {
 	t_class *c;
 
-	c = class_new("ntpython", (method)ntpython_new, (method)ntpython_free, (long)sizeof(t_ntpython),
+	c = class_new("nt.python", (method)ntpython_new, (method)ntpython_free, (long)sizeof(t_ntpython),
 				  0L, A_GIMME, 0);
 
     class_addmethod(c, (method)ntpython_read,        "read",      A_DEFSYM, 0);

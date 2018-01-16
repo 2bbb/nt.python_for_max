@@ -13,7 +13,7 @@
 /* Begin PBXFileReference section */
 		22CF10220EE984600054F513 /* maxmspsdk.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = maxmspsdk.xcconfig; path = ../../maxmspsdk.xcconfig; sourceTree = SOURCE_ROOT; };
 		22CF11890EE9A7DF0054F513 /* nt.python.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = nt.python.c; sourceTree = "<group>"; };
-		2FBBEAE508F335360078DB84 /* ntpython.mxo */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ntpython.mxo; sourceTree = BUILT_PRODUCTS_DIR; };
+		2FBBEAE508F335360078DB84 /* nt.python.mxo */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = nt.python.mxo; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,7 +40,7 @@
 		19C28FB4FE9D528D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2FBBEAE508F335360078DB84 /* ntpython.mxo */,
+				2FBBEAE508F335360078DB84 /* nt.python.mxo */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -74,7 +74,7 @@
 			);
 			name = "max-external";
 			productName = iterator;
-			productReference = 2FBBEAE508F335360078DB84 /* ntpython.mxo */;
+			productReference = 2FBBEAE508F335360078DB84 /* nt.python.mxo */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -150,13 +150,15 @@
 			baseConfigurationReference = 22CF10220EE984600054F513 /* maxmspsdk.xcconfig */;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
+				DSTROOT = "$(SRCROOT)/help";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = "$(SRCROOT)/../../Info.plist";
+				INSTALL_PATH = /;
 				OTHER_LDFLAGS = (
 					"$(C74_SYM_LINKER_FLAGS)",
 					"-lpython",
 				);
-				PRODUCT_NAME = ntpython;
+				PRODUCT_NAME = nt.python;
 			};
 			name = Development;
 		};
@@ -165,12 +167,14 @@
 			baseConfigurationReference = 22CF10220EE984600054F513 /* maxmspsdk.xcconfig */;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
+				DSTROOT = "$(SRCROOT)/help";
 				INFOPLIST_FILE = "$(SRCROOT)/../../Info.plist";
+				INSTALL_PATH = /;
 				OTHER_LDFLAGS = (
 					"$(C74_SYM_LINKER_FLAGS)",
 					"-lpython",
 				);
-				PRODUCT_NAME = ntpython;
+				PRODUCT_NAME = nt.python;
 			};
 			name = Deployment;
 		};
