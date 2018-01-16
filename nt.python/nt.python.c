@@ -236,6 +236,7 @@ void ntpython_doread(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
             path_splitnames(fullpath, foldername, scriptname);
             if (has_py_extention(scriptname)){
                 strncpy(modulename, scriptname, strlen(scriptname) - 3);
+                modulename[strlen(scriptname) - 3] = '\0';
             } else {
                 strcpy(modulename, scriptname);
             }
@@ -258,6 +259,7 @@ void ntpython_doread(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
                 path_splitnames(fullpath, foldername, patcher_name);
                 if (has_py_extention(filename)){
                     strncpy(modulename, filename, strlen(filename) - 3);
+                    modulename[strlen(scriptname) - 3] = '\0';
                 } else {
                     strcpy(modulename, filename);
                 }
