@@ -181,9 +181,9 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 282.0, 434.0, 47.0, 20.0 ],
+					"patching_rect" : [ 282.0, 434.0, 83.0, 20.0 ],
 					"style" : "",
-					"text" : "loaded"
+					"text" : "loaded / done"
 				}
 
 			}

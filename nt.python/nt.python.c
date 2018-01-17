@@ -219,7 +219,7 @@ void ntpython_doread(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
     
     if (s == gensym("")) {
         filename[0] = 0;
-        if (open_dialog(filename, &path, &type, NULL, 1) == 0) {
+        if (open_dialog(filename, &path, &type, NULL, 0) == 0) {
             found_script = true;
         } else return; // not selected
     } else {

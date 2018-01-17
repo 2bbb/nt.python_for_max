@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2FBBEAD608F335360078DB84"
-               BuildableName = "ntpython.mxo"
+               BuildableName = "nt.python.mxo"
                BlueprintName = "max-external"
                ReferencedContainer = "container:nt.python.xcodeproj">
             </BuildableReference>
@@ -53,7 +53,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2FBBEAD608F335360078DB84"
-            BuildableName = "ntpython.mxo"
+            BuildableName = "nt.python.mxo"
             BlueprintName = "max-external"
             ReferencedContainer = "container:nt.python.xcodeproj">
          </BuildableReference>
@@ -77,7 +77,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2FBBEAD608F335360078DB84"
-            BuildableName = "ntpython.mxo"
+            BuildableName = "nt.python.mxo"
             BlueprintName = "max-external"
             ReferencedContainer = "container:nt.python.xcodeproj">
          </BuildableReference>
