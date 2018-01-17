@@ -305,6 +305,10 @@ void ntpython_anything(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
 }
 
 void register_extension(t_ntpython *x) {
+    static int registered = 0;
+    if(registered) return;
+    
+    registered = 1;
     t_object *mypatcher;
     object_obex_lookup(x, gensym("#P"), &mypatcher);
     // create `; max fileformat .py PYTH "Pythonscript file" textfile` message obj
