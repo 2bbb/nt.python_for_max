@@ -46,6 +46,10 @@ bool has_module_loaded(t_ntpython *x);
 bool has_py_extention(char *scriptname);
 bool is_compatible_value_type(PyObject *obj);
 
+// proxy stdout/stderr on python to object_post/object_error
+void init_maxout_on_python(t_ntpython *x);
+#define NT_PYTHON_PRINT_OUT_ON_C_CONSOLE 0
+
 //////////////////////// global class pointer variable
 void *ntpython_class;
 
@@ -72,6 +76,7 @@ void load_python_script(t_ntpython *x, char *foldername, char *modulename){
     PyRun_SimpleString("import sys");
     sprintf(syspath, "sys.path.append(\"%s\")", foldername);
     PyRun_SimpleString(syspath);
+    init_maxout_on_python(x);
 
     PyObject *pName = PyString_FromString(modulename);
     if (x->t_module != NULL) {
@@ -406,4 +411,64 @@ void print_python_error_message(t_ntpython *x){
         }
         Py_XDECREF(pyth_module);
     }
+}
+
+// proxy stdout/stderr on python to object_post/object_error
+
+PyObject *python_to_max_out(PyObject *self, PyObject *args) {
+    char *str;
+    
+    if (!PyArg_ParseTuple(args, "s", &str)) return NULL;
+    post("%s", str);
+#if NT_PYTHON_PRINT_OUT_ON_C_CONSOLE
+    printf("%s\n", str);
+#endif
+    return Py_BuildValue("");
+}
+
+PyObject *python_to_max_error(PyObject *self, PyObject *args) {
+    char *str;
+    
+    if (!PyArg_ParseTuple(args, "s", &str)) return NULL;
+    error("%s", str);
+#if NT_PYTHON_PRINT_OUT_ON_C_CONSOLE
+    fprintf(stderr, "%s\n", str);
+#endif
+    return Py_BuildValue("");
+}
+
+static PyMethodDef maxout_methods[] = {
+    {"out", python_to_max_out, METH_VARARGS},
+    {"error", python_to_max_error, METH_VARARGS},
+    {NULL},
+};
+
+char *init_maxout_script() {
+    return "\
+import sys\n\
+import maxout\n\
+class ProxyOut:\n\
+    def __init__(self):\n\
+        pass\n\
+    def write(self, txt):\n\
+        maxout.out(txt)\n\
+class ProxyError:\n\
+    def __init__(self):\n\
+        pass\n\
+    def write(self, txt):\n\
+        maxout.error(txt)\n\
+    \n\
+# proxyOut = ProxyOut()\n\
+# proxyError = ProxyError()\n\
+sys.stdout = ProxyOut()\n\
+sys.stderr = ProxyError()";
+}
+
+void init_maxout_on_python(t_ntpython *x) {
+    static int maxout_initialized = 0;
+    if(!maxout_initialized) {
+        maxout_initialized = 1;
+        Py_InitModule("maxout", maxout_methods);
+    }
+    PyRun_SimpleString(init_maxout_script());
 }
