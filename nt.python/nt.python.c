@@ -213,13 +213,15 @@ void ntpython_doread(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
     char modulename[100]; // 100-chars should be long enough for a filename??
     short path;
     t_fourcc type = FOUR_CHAR_CODE('TEXT');
+    t_fourcc pytype = FOUR_CHAR_CODE('PYTH');
+    
     long err;
     
     bool found_script = false;
     
     if (s == gensym("")) {
         filename[0] = 0;
-        if (open_dialog(filename, &path, &type, NULL, 0) == 0) {
+        if (open_dialog(filename, &path, &type, &pytype, 1) == 0) {
             found_script = true;
         } else return; // not selected
     } else {
@@ -291,7 +293,6 @@ void ntpython_doreload(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
     }
 }
 
-
 void ntpython_bang(t_ntpython *x)
 {
     outlet_bang(x->outlet);
@@ -301,6 +302,28 @@ void ntpython_anything(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
 {
     run_python_method(x, s, argc, argv);
 //    defer((t_object *)x, (method)run_python_method, s, argc, argv);
+}
+
+void register_extension(t_ntpython *x) {
+    static int registered = 0;
+    if(registered) return;
+    
+    registered = 1;
+    t_object *mypatcher;
+    object_obex_lookup(x, gensym("#P"), &mypatcher);
+    // create `; max fileformat .py PYTH "Pythonscript file" textfile` message obj
+    t_object *max_message = newobject_sprintf(mypatcher,
+                                              "@maxclass message \
+                                              @text \"; max fileformat .py PYTH \\\"Pythonscript file\\\" textfile;\" \
+                                              @patching_rect -1 -1 1 1 \
+                                              @fontsize 1 \
+                                              @textcolor 0.0 0.0 0.0 0.0 \
+                                              @fontname Arial \
+                                              @bgcolor 0.0 0.0 0.0 0.0");
+    // send bang for message obj
+    object_method(max_message, gensym("bang"));
+    // remove message obj
+    object_free(max_message);
 }
 
 void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
@@ -334,6 +357,9 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
     
     x->outlet2 = bangout(x);
     x->outlet = outlet_new(x, NULL);
+
+    register_extension(x);
+    
 	return x;
 }
 
