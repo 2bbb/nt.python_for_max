@@ -22,7 +22,9 @@
 typedef struct _ntpython
 {
 	t_object ob;			// the object itself (must be first)
-	void     *outlet, *outlet2;
+    void     *outlet;  // output return value data from python
+    void     *outlet2; // system bang
+    void     *outlet3; // output argument of maxobj.oulet from python
     
     PyObject *t_module;
     char    *t_modulename;
@@ -45,6 +47,9 @@ void print_python_error_message(t_ntpython *x);
 bool has_module_loaded(t_ntpython *x);
 bool has_py_extention(char *scriptname);
 bool is_compatible_value_type(PyObject *obj);
+
+// proxy
+void init_maxout_on_python(t_ntpython *x);
 
 //////////////////////// global class pointer variable
 void *ntpython_class;
@@ -72,15 +77,15 @@ void load_python_script(t_ntpython *x, char *foldername, char *modulename){
     PyRun_SimpleString("import sys");
     sprintf(syspath, "sys.path.append(\"%s\")", foldername);
     PyRun_SimpleString(syspath);
-
+    
     PyObject *pName = PyString_FromString(modulename);
     if (x->t_module != NULL) {
         Py_DECREF(x->t_module);
         if (x->t_modulename) free(x->t_modulename);
-    } else {
-        x->t_module = PyImport_Import(pName);
     }
+    x->t_module = PyImport_Import(pName);
     Py_DECREF(pName);
+    if(x->t_module != NULL) init_maxout_on_python(x);
 
     if (x->t_module != NULL) {
         object_post((t_object *)x, "loaded: %s", modulename);
@@ -122,8 +127,8 @@ t_atom convert_to_max_object(PyObject *obj){
     return a;
 }
 
-t_atomarray *convert_list_to_max_object(PyObject *obj){
-    if (PyList_Check(obj)){
+t_atomarray *convert_list_to_max_object(PyObject *obj) {
+    if (PyList_Check(obj) || PyTuple_Check(obj)){
         PyObject *seq = PySequence_Fast(obj, "");
         Py_ssize_t len = PySequence_Size(obj);
         
@@ -355,6 +360,7 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
         }
     }
     
+    x->outlet3 = outlet_new(x, NULL);
     x->outlet2 = bangout(x);
     x->outlet = outlet_new(x, NULL);
 
@@ -433,3 +439,163 @@ void print_python_error_message(t_ntpython *x){
         Py_XDECREF(pyth_module);
     }
 }
+
+// proxy stdout/stderr on python to object_post/object_error
+
+PyObject *python_to_max_out(PyObject *self, PyObject *args) {
+    char *str;
+    
+    if (!PyArg_ParseTuple(args, "s", &str)) return NULL;
+    post("%s", str);
+#if NT_PYTHON_PRINT_OUT_ON_C_CONSOLE
+    printf("%s\n", str);
+#endif
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject *python_to_max_error(PyObject *self, PyObject *args) {
+    char *str;
+    
+    if (!PyArg_ParseTuple(args, "s", &str)) return NULL;
+    error("%s", str);
+#if NT_PYTHON_PRINT_OUT_ON_C_CONSOLE
+    fprintf(stderr, "%s\n", str);
+#endif
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyMethodDef maxout_proxy_methods[] = {
+    {"out", python_to_max_out, METH_VARARGS},
+    {"error", python_to_max_error, METH_VARARGS},
+    {NULL},
+};
+
+char *init_maxout_script() {
+    return "\
+import sys\n\
+import maxout_proxy\n\
+class ProxyOut:\n\
+    def __init__(self):\n\
+        pass\n\
+    def write(self, txt):\n\
+        maxout_proxy.out(txt)\n\
+class ProxyError:\n\
+    def __init__(self):\n\
+        pass\n\
+    def write(self, txt):\n\
+        maxout_proxy.error(txt)\n\
+    \n\
+# proxyOut = ProxyOut()\n\
+# proxyError = ProxyError()\n\
+sys.stdout = ProxyOut()\n\
+sys.stderr = ProxyError()";
+}
+
+// call outlet_XXX from python
+
+typedef struct {
+    PyObject_HEAD
+    /* Type-specific fields go here. */
+    t_ntpython *x;
+} MaxOutObject;
+
+PyObject *python_to_max_outlet(MaxOutObject *self, PyObject *args) {
+    t_ntpython *x = self->x;
+    t_atomarray *arr = convert_list_to_max_object(args);
+    long ac;
+    t_atom *av;
+    atomarray_getatoms(arr, &ac, &av);
+    outlet_atoms(x->outlet3, ac, av);
+    object_free(arr);
+    return Py_BuildValue("");
+}
+
+static PyMethodDef maxout_methods[] = {
+    {"outlet", (PyCFunction)python_to_max_outlet, METH_VARARGS},
+    {NULL},
+};
+
+static PyObject *MaxOut_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    MaxOutObject *self;
+    
+    self = (MaxOutObject *)type->tp_alloc(type, 0);
+    if (self != NULL) {}
+    
+    return (PyObject *)self;
+}
+
+static int MaxOut_init(MaxOutObject *self, PyObject *args, PyObject *kwds) {
+    return 0;
+}
+
+static PyTypeObject MaxOutType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "ntpython.MaxOut",             /* tp_name */
+    sizeof(MaxOutObject),          /* tp_basicsize */
+    0,                             /* tp_itemsize */
+    0,                             /* tp_dealloc */
+    0,                             /* tp_print */
+    0,                             /* tp_getattr */
+    0,                             /* tp_setattr */
+    0,                             /* tp_reserved */
+    0,                             /* tp_repr */
+    0,                             /* tp_as_number */
+    0,                             /* tp_as_sequence */
+    0,                             /* tp_as_mapping */
+    0,                             /* tp_hash  */
+    0,                             /* tp_call */
+    0,                             /* tp_str */
+    0,                             /* tp_getattro */
+    0,                             /* tp_setattro */
+    0,                             /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT |
+    Py_TPFLAGS_BASETYPE,           /* tp_flags */
+    "MaxOut objects",              /* tp_doc */
+    0,                             /* tp_traverse */
+    0,                             /* tp_clear */
+    0,                             /* tp_richcompare */
+    0,                             /* tp_weaklistoffset */
+    0,                             /* tp_iter */
+    0,                             /* tp_iternext */
+    maxout_methods,                /* tp_methods */
+    0,                             /* tp_members */
+    0,                             /* tp_getset */
+    0,                             /* tp_base */
+    0,                             /* tp_dict */
+    0,                             /* tp_descr_get */
+    0,                             /* tp_descr_set */
+    0,                             /* tp_dictoffset */
+    (initproc)MaxOut_init,         /* tp_init */
+    0,                             /* tp_alloc */
+    MaxOut_new,                    /* tp_new */
+};
+
+#ifndef PyMODINIT_FUNC    /* declarations for DLL import/export */
+#   define PyMODINIT_FUNC void
+#endif
+
+PyMODINIT_FUNC initmaxobjtype(void) {
+    MaxOutType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&MaxOutType) < 0)
+        return;
+}
+
+//void maxout_destruct(void *x) {};
+
+void init_maxout_on_python(t_ntpython *x) {
+    static int maxout_initialized = 0;
+    if(!maxout_initialized) {
+        Py_InitModule("maxout_proxy", maxout_proxy_methods);
+        PyRun_SimpleString(init_maxout_script());
+        initmaxobjtype();
+    }
+    
+    MaxOutObject *maxobj = PyObject_New(MaxOutObject, &MaxOutType);
+    maxobj->x = x;
+    PyObject_SetAttrString(x->t_module, "maxobj", (PyObject *)maxobj);
+    Py_DECREF(maxobj);
+}
+
