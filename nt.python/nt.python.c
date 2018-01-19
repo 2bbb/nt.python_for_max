@@ -55,7 +55,7 @@ void ext_main(void *r)
 
 	c = class_new("nt.python", (method)ntpython_new, (method)ntpython_free, (long)sizeof(t_ntpython),
 				  0L, A_GIMME, 0);
-
+    class_addmethod(c, (method)ntpython_assist,      "assist",    A_GIMME, 0);
     class_addmethod(c, (method)ntpython_read,        "read",      A_DEFSYM, 0);
     class_addmethod(c, (method)ntpython_reload,      "reload",    A_NOTHING, 0);
     class_addmethod(c, (method)ntpython_anything,    "anything",  A_GIMME, 0);
@@ -197,8 +197,21 @@ void run_python_method(t_ntpython *x, t_symbol *s, long argc, t_atom *argv){
 
 void ntpython_assist(t_ntpython *x, void *b, long m, long a, char *s)
 {
-	if (m == ASSIST_INLET)
+    if (m == ASSIST_INLET) {
 		sprintf(s, "Message In");
+        return;
+    } else if(m == ASSIST_OUTLET) {
+        switch(a) {
+            case 0:
+                strncpy_zero(s, "Return value of python script", 100);
+                return;
+            case 1:
+                strncpy_zero(s, "Output bang when script is loaded", 100);
+                return;
+            default:
+                break;
+        }
+    }
 }
 
 void ntpython_read(t_ntpython *x, t_symbol *s)
