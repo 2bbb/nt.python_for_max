@@ -47,9 +47,11 @@ void print_python_error_message(t_ntpython *x);
 bool has_module_loaded(t_ntpython *x);
 bool has_py_extention(char *scriptname);
 bool is_compatible_value_type(PyObject *obj);
+void print_functions(t_ntpython *x);
 
-// proxy
+// proxy stdout/stderr on python to object_post/object_error
 void init_maxout_on_python(t_ntpython *x);
+#define NT_PYTHON_PRINT_OUT_ON_C_CONSOLE 0
 
 //////////////////////// global class pointer variable
 void *ntpython_class;
@@ -60,7 +62,7 @@ void ext_main(void *r)
 
 	c = class_new("nt.python", (method)ntpython_new, (method)ntpython_free, (long)sizeof(t_ntpython),
 				  0L, A_GIMME, 0);
-
+    class_addmethod(c, (method)ntpython_assist,      "assist",    A_GIMME, 0);
     class_addmethod(c, (method)ntpython_read,        "read",      A_DEFSYM, 0);
     class_addmethod(c, (method)ntpython_reload,      "reload",    A_NOTHING, 0);
     class_addmethod(c, (method)ntpython_anything,    "anything",  A_GIMME, 0);
@@ -69,7 +71,6 @@ void ext_main(void *r)
 	class_register(CLASS_BOX, c);
 	ntpython_class = c;
 }
-
 
 void load_python_script(t_ntpython *x, char *foldername, char *modulename){
     char syspath[MAX_PATH_CHARS];
@@ -91,6 +92,7 @@ void load_python_script(t_ntpython *x, char *foldername, char *modulename){
         object_post((t_object *)x, "loaded: %s", modulename);
         x->t_modulename = strdup(modulename);
         outlet_bang(x->outlet2);
+        print_functions(x);
     }
     else {
         object_error((t_object *)x, "failed to load module: %s", modulename);
@@ -202,8 +204,21 @@ void run_python_method(t_ntpython *x, t_symbol *s, long argc, t_atom *argv){
 
 void ntpython_assist(t_ntpython *x, void *b, long m, long a, char *s)
 {
-	if (m == ASSIST_INLET)
+    if (m == ASSIST_INLET) {
 		sprintf(s, "Message In");
+        return;
+    } else if(m == ASSIST_OUTLET) {
+        switch(a) {
+            case 0:
+                strncpy_zero(s, "Return value of python script", 100);
+                return;
+            case 1:
+                strncpy_zero(s, "Output bang when script is loaded", 100);
+                return;
+            default:
+                break;
+        }
+    }
 }
 
 void ntpython_read(t_ntpython *x, t_symbol *s)
@@ -391,6 +406,21 @@ bool has_module_loaded(t_ntpython *x){
 bool is_compatible_value_type(PyObject *obj){
     return (PyInt_Check(obj)|| PyFloat_Check(obj)||PyString_Check(obj)||PyList_Check(obj));
 }
+
+void print_functions(t_ntpython *x) {
+    PyObject *dict = PyModule_GetDict(x->t_module), *key, *value;
+    Py_ssize_t pos = 0;
+    
+    object_post((t_object *)x, "%function in s:", x->t_modulename);
+    while(PyDict_Next(dict, &pos, &key, &value)) {
+        if(PyFunction_Check(value)) {
+            t_atom atom = convert_to_max_object(key);
+            t_symbol *sym = atom_getsym(&atom);
+            object_post((t_object *)x, "    %s", sym->s_name);
+        }
+    }
+}
+
 
 // check if a filename has .py extention
 bool has_py_extention(char *scriptname){
