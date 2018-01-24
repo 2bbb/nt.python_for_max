@@ -81,7 +81,10 @@ void load_python_script(t_ntpython *x, char *foldername, char *modulename){
     PyObject *pName = PyString_FromString(modulename);
     if (x->t_module != NULL) {
         Py_DECREF(x->t_module);
-        if (x->t_modulename) free(x->t_modulename);
+        if (x->t_modulename) {
+            free(x->t_modulename);
+            x->t_modulename = NULL;
+        }
     } else {
         x->t_module = PyImport_Import(pName);
     }
