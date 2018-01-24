@@ -443,6 +443,7 @@ bool is_compatible_value_type(PyObject *obj){
 }
 
 void print_functions(t_ntpython *x) {
+    swap_interpreter(x);
     PyObject *dict = PyModule_GetDict(x->t_module), *key, *value;
     Py_ssize_t pos = 0;
     
@@ -463,6 +464,7 @@ bool has_py_extention(char *scriptname){
 }
 
 void print_python_error_message(t_ntpython *x){
+    swap_interpreter(x);
     // https://stackoverflow.com/questions/1796510/accessing-a-python-traceback-from-the-c-api
     PyObject *err = PyErr_Occurred(); // do not Py_DECREF()
     if (err != NULL) {
