@@ -38,6 +38,18 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-4",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 252.0, 433.0, 119.0, 22.0 ],
+					"style" : "",
+					"text" : "print from_mxj.outlet"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-24",
 					"linecount" : 8,
 					"maxclass" : "comment",
@@ -181,7 +193,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 282.0, 434.0, 83.0, 20.0 ],
+					"patching_rect" : [ 163.0, 464.0, 83.0, 20.0 ],
 					"style" : "",
 					"text" : "loaded / done"
 				}
@@ -194,7 +206,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "bang" ],
-					"patching_rect" : [ 252.0, 432.0, 24.0, 24.0 ],
+					"patching_rect" : [ 186.0, 432.0, 24.0, 24.0 ],
 					"style" : ""
 				}
 
@@ -217,8 +229,8 @@
 					"id" : "obj-1",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
-					"numoutlets" : 2,
-					"outlettype" : [ "", "bang" ],
+					"numoutlets" : 3,
+					"outlettype" : [ "", "bang", "" ],
 					"patching_rect" : [ 120.0, 386.0, 151.0, 22.0 ],
 					"style" : "",
 					"text" : "nt.python python_example"
@@ -230,6 +242,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-3", 0 ],
 					"source" : [ "obj-1", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-4", 0 ],
+					"source" : [ "obj-1", 2 ]
 				}
 
 			}
