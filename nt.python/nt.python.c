@@ -376,7 +376,10 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
         PyEval_InitThreads();
     }
     
+    PyThreadState *main_thread = PyThreadState_Get();
     x->interpreter_thread = Py_NewInterpreter();
+    PyThreadState_Swap(main_thread);
+    
     swap_interpreter(x);
     
     // Arguments
