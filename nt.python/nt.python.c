@@ -27,6 +27,7 @@ typedef struct _ntpython
     void     *outlet3; // output argument of maxobj.oulet from python
     
     PyThreadState *interpreter_thread;
+    PyThreadState *temp_thread;
     PyObject *t_module;
     char    *t_modulename;
 } t_ntpython;
@@ -46,6 +47,7 @@ void ntpython_bang(t_ntpython *x);
 // subintepreter
 
 void swap_interpreter(t_ntpython *x);
+void restore_interpreter(t_ntpython *x);
 
 // UTILITIES
 void print_python_error_message(t_ntpython *x);
@@ -104,6 +106,7 @@ void load_python_script(t_ntpython *x, char *foldername, char *modulename){
         object_error((t_object *)x, "failed to load module: %s", modulename);
         print_python_error_message(x);
     }
+    restore_interpreter(x);
 }
 
 PyObject *convert_to_python_object(t_atom *a){
@@ -208,6 +211,7 @@ void run_python_method(t_ntpython *x, t_symbol *s, long argc, t_atom *argv) {
         PyErr_Print();
         object_error((t_object *)x, "can't find function %s", func_name);
     }
+    restore_interpreter(x);
 }
 
 
@@ -321,6 +325,7 @@ void ntpython_doreload(t_ntpython *x, t_symbol *s, long argc, t_atom *argv)
     } else {
         print_python_error_message(x);
     }
+    restore_interpreter(x);
 }
 
 void ntpython_bang(t_ntpython *x)
@@ -396,7 +401,8 @@ void *ntpython_new(t_symbol *s, long argc, t_atom *argv)
     x->outlet = outlet_new(x, NULL);
 
     register_extension(x);
-    
+    restore_interpreter(x);
+
 	return x;
 }
 
@@ -415,15 +421,20 @@ void ntpython_free(t_ntpython *x)
     
     if(x->interpreter_thread) {
         Py_EndInterpreter(x->interpreter_thread);
-        Py_XDECREF(x->interpreter_thread);
         x->interpreter_thread = NULL;
     }
+    restore_interpreter(x);
 }
 
 #pragma mark SUBINERPRETER
 
 void swap_interpreter(t_ntpython *x) {
-    PyThreadState_Swap(x->interpreter_thread);
+    x->temp_thread = PyThreadState_Swap(x->interpreter_thread);
+}
+
+void restore_interpreter(t_ntpython *x) {
+    if(x->temp_thread) PyThreadState_Swap(x->temp_thread);
+    x->temp_thread = NULL;
 }
 
 #pragma mark UTILITY
@@ -455,6 +466,7 @@ void print_functions(t_ntpython *x) {
             object_post((t_object *)x, "    %s", sym->s_name);
         }
     }
+    restore_interpreter(x);
 }
 
 
@@ -485,7 +497,10 @@ void print_python_error_message(t_ntpython *x){
         module_name = PyString_FromString("traceback");
         pyth_module = PyImport_Import(module_name);
         Py_DECREF(module_name);
-        if (pyth_module == NULL) return;
+        if (pyth_module == NULL) {
+            restore_interpreter(x);
+            return;
+        }
         
         pyth_func = PyObject_GetAttrString(pyth_module, "format_exception");
         if (pyth_func && PyCallable_Check(pyth_func)) {
@@ -505,6 +520,7 @@ void print_python_error_message(t_ntpython *x){
         }
         Py_XDECREF(pyth_module);
     }
+    restore_interpreter(x);
 }
 
 // proxy stdout/stderr on python to object_post/object_error
@@ -570,6 +586,7 @@ typedef struct {
 
 PyObject *python_to_max_outlet(MaxOutObject *self, PyObject *args) {
     t_ntpython *x = self->x;
+    
     swap_interpreter(x);
     t_atomarray *arr = convert_list_to_max_object(args);
     long ac;
@@ -577,6 +594,8 @@ PyObject *python_to_max_outlet(MaxOutObject *self, PyObject *args) {
     atomarray_getatoms(arr, &ac, &av);
     outlet_atoms(x->outlet3, ac, av);
     object_free(arr);
+    restore_interpreter(x);
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -661,10 +680,10 @@ void init_maxout_on_python(t_ntpython *x) {
     PyRun_SimpleString(init_maxout_script());
     initmaxobjtype();
     
-    swap_interpreter(x);
     MaxOutObject *maxobj = PyObject_New(MaxOutObject, &MaxOutType);
     maxobj->x = x;
     PyObject_SetAttrString(x->t_module, "maxobj", (PyObject *)maxobj);
     Py_DECREF(maxobj);
+    restore_interpreter(x);
 }
 
